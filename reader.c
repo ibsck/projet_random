@@ -25,14 +25,12 @@ int main(int argc, char * argv[])
     {
         if(fork() == 0)
         {
-            //le fils
-            printf("je suis le fils %d\n", i);
            /*
             le processus fils doit creer une memoire partagee 
             et generer un tableau de 2 milliards d'entiers aleatoires
             et stocker les occurences de chaque entier dans la memoire partagee
            */   
-           
+            printf("creation processus %d\n",i+1);
             if(execl("./writer", "writer", NULL) == -1)
             {
                 perror("execl");
@@ -54,6 +52,8 @@ int main(int argc, char * argv[])
     for(int j=0; j < NB_PROCESS; j++)
     {
         wait(NULL);
+        //affichage indicateur de progression
+        printf("%d%%\n", (j+1)*10);
     }
     
     unsigned long  nbtotallancer = (unsigned long)214*10000000*NB_PROCESS; //nombre total de lancer
@@ -91,7 +91,10 @@ int main(int argc, char * argv[])
     destroySharedMemory(shmid);
     return EXIT_SUCCESS;
 }
-
+/*  fonction cree une memoire partagee de taille size 
+    si elle n'a pas déjà é été créée 
+    sinon elle retourne un pointeur sur la memoire partagee existante
+*/
 void createSharedMemory(key_t key, int size, int *shmid, int **shm)
 {
     if ((*shmid = shmget(key, size, IPC_CREAT | 0666)) < 0) {
@@ -103,7 +106,9 @@ void createSharedMemory(key_t key, int size, int *shmid, int **shm)
         exit(EXIT_FAILURE);
     }
 }
-
+/* 
+  fonction detruit la memoire partagee
+*/
 void destroySharedMemory(int shmid)
 {
     if (shmctl(shmid, IPC_RMID, NULL) == -1) {

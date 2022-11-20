@@ -9,9 +9,6 @@
 #include <sys/sem.h>
 #include <time.h>
 
-#define SETALL 17
-#define NB_LOOP RAND_MAX
-
 //prototypes des fonctions
 void getRandom(int *tab);
 int * createSharedMemory(key_t key, int size); 
@@ -36,7 +33,6 @@ int main(int argc, char *argv[] )
      
     //creation d'une cle pour la memoire partagee
     key_t key = ftok("fiche", 'a');
-
     memory = createSharedMemory(key, 2000*sizeof(int));
     //creation du semaphore
     if ((sem = semget(key, 1, 0)) == -1) 
@@ -51,18 +47,13 @@ int main(int argc, char *argv[] )
         if (semctl(sem, 0, SETALL, u_semun) < 0)
             perror("semctl");
     } 
-    
     srand((unsigned)time(NULL)^getpid());
     for(int i=0;i<214;i++){  
-         //tableau de 10 millions d'entiers local
+        //tableau de 10 millions d'entiers local
         int * array =  malloc(10000000*sizeof(int));
+        getRandom(array); //remplissage du tableau local
         
-        printf("indice de boucle %d\n",i);
-        //remplissage du tableau local
-        getRandom(array);
-    
         //le semaphore bloque la memoire partagee
-        
         sembuf.sem_num = 0;
         sembuf.sem_op = -1;
         sembuf.sem_flg = 0;
@@ -94,7 +85,6 @@ int main(int argc, char *argv[] )
         perror("shmdt");
         exit(EXIT_FAILURE);
     }
-
     printf("fils fini\n");
     return EXIT_SUCCESS;
 }
