@@ -1,8 +1,7 @@
 # Aléatoire équilibré ?
 
 **Pour compiler** : 
-gcc reader.c -o reader
-gcc writer.c - writer
+gcc reader.c -o reader | gcc writer.c - writer
 
 **Pour lancer l'application** :
 ./writer
