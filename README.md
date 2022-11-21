@@ -11,5 +11,5 @@
 ***COMPOSITION DU PROJET***
 - writter.c  : Un fichier 
 - reader.c   : Un fichier 
-- params.txt : Un fichier de paramètres possédant la clé du sémaphore et de la mémoire partagée
+- file : Un fichier permettant de récuperer la clé pour le sémaphore et mémoire partagée
 
