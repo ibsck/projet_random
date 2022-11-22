@@ -8,7 +8,11 @@
 #include <sys/sem.h>
 #include <time.h>
 #include <math.h>
-#define NB_PROCESS 10 //nombre de processus
+
+#define NB_PROCESS 10 // Nombre de processus
+#define NB_LOOP 214 // RANDMAX / 1 Milliard le tout en entier
+#define NB_RANDOM_GENERE 10000000
+#define TAILLE_TAB_FINAL 2000 // La taille mémoire partagée
 
 void createSharedMemory(key_t key, int size, int *shmid, int **shm);
 void destroySharedMemory(int shmid);
@@ -20,44 +24,42 @@ int main(int argc, char * argv[])
     int *shm, *s;
     key_t key = ftok("fiche", 'a');
     
-    //le pere cree NB_PROCESS processus
+    // Le pere cree NB_PROCESS processus
     for(i=0; i<NB_PROCESS; i++)
     {
         if(fork() == 0)
         {
            /*
-            le processus fils doit creer une memoire partagee 
-            et generer un tableau de 2 milliards d'entiers aleatoires
-            et stocker les occurences de chaque entier dans la memoire partagee
+            Le processus fils doit créer une mémoire partagée
+            et générer un tableau de 2 milliards d'entiers aléatoires
+            et stocker les occurences de chaque entier dans la mémoire partagée
            */   
-            printf("creation processus %d\n",i+1);
+
             if(execl("./writer", "writer", NULL) == -1)
             {
                 perror("execl");
                 return 1;
             }
             exit(EXIT_SUCCESS);
+        } else{
+            printf("Création du processus n%d\n",i+1);
         }
         
     }
-    
-    //le pere execute la suite
-    printf("je suis le pere\n");
-    printf("mon pid est %d\n", getpid());
 
     //le pere se branche sur le segment de memoire partagee
-    createSharedMemory(key, 2000*sizeof(int), &shmid, &shm);
+    createSharedMemory(key, TAILLE_TAB_FINAL * sizeof(int), &shmid, &shm);
     
     //le pere attend la fin des fils
     for(int j=0; j < NB_PROCESS; j++)
     {
         wait(NULL);
         //affichage indicateur de progression
-        printf("%d%%\n", (j+1)*10);
+        printf("%d%%\n", (j+1) * NB_PROCESS);
     }
     
-    unsigned long  nbtotallancer = (unsigned long)214*10000000*NB_PROCESS; //nombre total de lancer
-    int nbtailletableau = 2000; //nombre de case du tableau
+    unsigned long  nbtotallancer = (unsigned long)NB_LOOP * NB_RANDOM_GENERE * NB_PROCESS; //nombre total de lancer
+    int nbtailletableau = TAILLE_TAB_FINAL; //nombre de case du tableau
     float nbtotal = nbtotallancer / nbtailletableau; //nombre de lancer par case du tableau
     float erreur = 0;
     float erreurpourcent = 0;
@@ -75,25 +77,25 @@ int main(int argc, char * argv[])
         s++;
     }
 
-    printf("nombre de case avec une erreur supérieur à 5%% : %d\n",equilibrage);
-    printf("nombre de case avec une erreur inférieur à 5%% : %d\n",nbtailletableau - equilibrage);
-    printf("pourcentage de case avec une erreur inférieur à 5%% : %f %%\n",((nbtailletableau - equilibrage)*100)/(float)nbtailletableau);
-    printf("pourcentage de case avec une erreur supérieur à 5%% : %f %%\n",((equilibrage)*100)/(float)nbtailletableau);
+    printf("Nombre de case avec une erreur supérieur à 5%% : %d\n",equilibrage);
+    printf("Nombre de case avec une erreur inférieur à 5%% : %d\n",nbtailletableau - equilibrage);
+    printf("Pourcentage de case avec une erreur inférieur à 5%% : %f %%\n",((nbtailletableau - equilibrage)*100)/(float)nbtailletableau);
+    printf("Pourcentage de case avec une erreur supérieur à 5%% : %f %%\n",((equilibrage)*100)/(float)nbtailletableau);
     
     if(equilibrage > 0){
-        printf("le tirage n'est pas équilibré\n");
+        printf("Le tirage n'est pas équilibré\n");
     }
     else{
-        printf("le tirage est équilibré\n");
+        printf("Le tirage est équilibré\n");
     }
   
-    //le pere detruit la memoire partagée
+    // Le père détruit la mémoire partagée
     destroySharedMemory(shmid);
     return EXIT_SUCCESS;
 }
-/*  fonction cree une memoire partagee de taille size 
-    si elle n'a pas déjà é été créée 
-    sinon elle retourne un pointeur sur la memoire partagee existante
+/*  La fonction crée une mémoire partagée de taille size
+    si elle n'a pas déjà été créée
+    sinon elle retourne un pointeur sur la mémoire partagée existante
 */
 void createSharedMemory(key_t key, int size, int *shmid, int **shm)
 {
@@ -107,7 +109,7 @@ void createSharedMemory(key_t key, int size, int *shmid, int **shm)
     }
 }
 /* 
-  fonction detruit la memoire partagee
+  La fonction détruit la mémoire partagée
 */
 void destroySharedMemory(int shmid)
 {

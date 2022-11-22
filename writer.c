@@ -9,6 +9,10 @@
 #include <sys/sem.h>
 #include <time.h>
 
+#define TAILLE_TAB 10000000
+#define TAILLE_TAB_FINAL 2000 // La taille mémoire partagée
+#define NB_LOOP 214 // RANDMAX / 10 millions, le tout en entier
+
 //prototypes des fonctions
 void getRandom(int *tab);
 int * createSharedMemory(key_t key, int size); 
@@ -33,7 +37,7 @@ int main(int argc, char *argv[] )
      
     //creation d'une cle pour la memoire partagee
     key_t key = ftok("fiche", 'a');
-    memory = createSharedMemory(key, 2000*sizeof(int));
+    memory = createSharedMemory(key, TAILLE_TAB_FINAL * sizeof(int));
     //creation du semaphore
     if ((sem = semget(key, 1, 0)) == -1) 
     {
@@ -48,11 +52,13 @@ int main(int argc, char *argv[] )
             perror("semctl");
     } 
     srand((unsigned)time(NULL)^getpid());
-    for(int i=0;i<214;i++){  
+
+    for(int i = 0; i < NB_LOOP; i++){
         //tableau de 10 millions d'entiers local
-        int * array =  malloc(10000000*sizeof(int));
+        int * array =  malloc(TAILLE_TAB * sizeof(int));
         getRandom(array); //remplissage du tableau local
-        
+        printf("%d\n",i);
+
         //le semaphore bloque la memoire partagee
         sembuf.sem_num = 0;
         sembuf.sem_op = -1;
@@ -64,8 +70,8 @@ int main(int argc, char *argv[] )
         }
         //ecriture dans la memoire partagee
 
-        for(int j=0; j<10000000; j++){
-            memory[array[j]%2000]++;           
+        for(int j=0; j < TAILLE_TAB; j++){
+            memory[array[j] % TAILLE_TAB_FINAL]++;
         } 
 
         //le semaphore debloque la memoire partagee 
@@ -76,7 +82,7 @@ int main(int argc, char *argv[] )
         {
             perror("semop");
             exit(EXIT_FAILURE);
-        } 
+        }
         free(array); //liberation de la memoire
     }
     //le fils se detache de la memoire partagee
@@ -94,7 +100,7 @@ int main(int argc, char *argv[] )
 
 void getRandom(int *tab) 
 {
-    for(int i=0;i<10000000;i++){ tab[i] = rand(); }
+    for(int i = 0; i < TAILLE_TAB; i++){ tab[i] = rand(); }
 }
 
 /*  fonction cree une memoire partagee de taille size et retourne un
