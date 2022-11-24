@@ -48,6 +48,7 @@ int main(int argc, char *argv[] )
         }
         table[0] = 1;
         u_semun.table = table;
+        //initialisation du semaphore
         if (semctl(sem, 0, SETALL, u_semun) < 0)
             perror("semctl");
     } 
@@ -62,7 +63,7 @@ int main(int argc, char *argv[] )
         //le semaphore bloque la memoire partagee
         sembuf.sem_num = 0;
         sembuf.sem_op = -1;
-        sembuf.sem_flg = 0;
+        sembuf.sem_flg = SEM_UNDO;
         if (semop(sem, &sembuf, 1) == -1) 
         {
             perror("semop");
@@ -77,7 +78,7 @@ int main(int argc, char *argv[] )
         //le semaphore debloque la memoire partagee 
         sembuf.sem_num = 0;
         sembuf.sem_op = 1;
-        sembuf.sem_flg = 0;
+        sembuf.sem_flg = SEM_UNDO;
         if (semop(sem, &sembuf, 1) == -1) 
         {
             perror("semop");
